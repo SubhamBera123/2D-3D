@@ -19,10 +19,16 @@ export default function WallMesh({ x1, y1, x2, y2, height, thickness, scale, off
             position={[midX, height / 2, midZ]}
             rotation={[0, -angle, 0]}
             castShadow
+            receiveShadow
         >
             <boxGeometry args={[length, height, thickness]} />
-            <meshStandardMaterial color="#8f8f8f" roughness={0.8} metalness={0.1} />
-
+            <meshStandardMaterial 
+                color="#8f8f8f" 
+                roughness={0.3} 
+                metalness={0.8}
+                emissive="#4a5568"
+                emissiveIntensity={0.2}
+            />
         </mesh>
     );
 }
