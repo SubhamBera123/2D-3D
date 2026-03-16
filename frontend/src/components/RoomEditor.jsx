@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Home, Check } from "lucide-react";
+import { Home, Check, Plus, Trash2 } from "lucide-react";
 
 const roomTypes = [
     "Bedroom",
@@ -16,6 +16,8 @@ const roomTypes = [
 ];
 
 export default function RoomEditor({ rooms, onAssign }) {
+    // Remove the single selection - allow all rooms to be labeled independently
+    
     return (
         <div style={{ 
             marginTop: 10,
@@ -63,7 +65,32 @@ export default function RoomEditor({ rooms, onAssign }) {
                     fontSize: '1rem',
                     margin: 0
                 }}>
-                    Select the appropriate room type for each detected area
+                    Select and label each room area. You can add multiple rooms!
+                </p>
+            </motion.div>
+
+            {/* Info Banner */}
+            <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                style={{
+                    padding: '20px 30px',
+                    background: 'rgba(0, 242, 254, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    borderRadius: '20px',
+                    border: '2px solid rgba(0, 242, 254, 0.3)',
+                    textAlign: 'center',
+                    marginBottom: '30px',
+                    boxShadow: '0 8px 32px rgba(0, 242, 254, 0.15)'
+                }}
+            >
+                <p style={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '1rem',
+                    margin: 0
+                }}>
+                    ✅ You can label <strong>all rooms</strong> independently! Select a room type for each detected area.
                 </p>
             </motion.div>
 
@@ -72,7 +99,8 @@ export default function RoomEditor({ rooms, onAssign }) {
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                 gap: '20px',
-                padding: '10px'
+                padding: '10px',
+                marginBottom: '30px'
             }}>
                 {rooms.map((room, idx) => (
                     <RoomCard
@@ -80,15 +108,48 @@ export default function RoomEditor({ rooms, onAssign }) {
                         index={idx}
                         room={room}
                         onAssign={onAssign}
+                        isSelected={false} // No single selection anymore
+                        onSelect={() => {}} // Keep for compatibility but don't use
                     />
                 ))}
             </div>
+
+            {/* Add Room Button */}
+            <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                style={{ textAlign: 'center' }}
+            >
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                        padding: '16px 40px',
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        border: 'none',
+                        borderRadius: '50px',
+                        color: '#fff',
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 15px 40px rgba(102, 126, 234, 0.4)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        fontFamily: 'Orbitron, sans-serif'
+                    }}
+                >
+                    <Plus size={22} />
+                    Add More Rooms (Coming Soon)
+                </motion.button>
+            </motion.div>
         </div>
     );
 }
 
-function RoomCard({ index, room, onAssign }) {
-    const [isSelected, setIsSelected] = useState(false);
+function RoomCard({ index, room, onAssign, isSelected, onSelect }) {
+    const [isHovered, setIsHovered] = useState(false);
     
     return (
         <motion.div
@@ -113,8 +174,8 @@ function RoomCard({ index, room, onAssign }) {
                 position: 'relative',
                 overflow: 'hidden'
             }}
-            onMouseEnter={() => setIsSelected(true)}
-            onMouseLeave={() => setIsSelected(false)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
             {/* Gradient Overlay on Hover */}
             <motion.div

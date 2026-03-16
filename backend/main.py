@@ -39,7 +39,7 @@ async def process_blueprint(file: UploadFile = File(...)):
 
     # Process with OpenCV
     img, gray, edges = preprocess(file_location)
-    walls = detect_lines(edges)
+    walls = detect_lines(edges, img)  # Pass original image for color extraction
 
     return {
         "filename": file.filename,

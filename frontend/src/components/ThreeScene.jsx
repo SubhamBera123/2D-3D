@@ -1,14 +1,16 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, PointerLockControls } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
-import { Box, User, Download, Eye } from "lucide-react";
+import { Box, User, Download, Eye, Maximize2, Minimize2 } from "lucide-react";
 
 export default function ThreeScene({ children }) {
     const [fpsMode, setFpsMode] = useState(false);
+    const [fullscreen, setFullscreen] = useState(false);
     const keys = useRef({});
     const sceneRef = useRef();
+    const containerRef = useRef();
 
     useEffect(() => {
         const down = (e) => (keys.current[e.code] = true);
@@ -21,6 +23,27 @@ export default function ThreeScene({ children }) {
             window.removeEventListener("keydown", down);
             window.removeEventListener("keyup", up);
         };
+    }, []);
+
+    // Fullscreen toggle
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(err => {
+                console.error('Error attempting to enable fullscreen:', err);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    // Listen for fullscreen changes
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setFullscreen(!!document.fullscreenElement);
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
     const exportGLB = () => {
@@ -150,30 +173,75 @@ export default function ThreeScene({ children }) {
                         <Download size={20} />
                         Export .GLB
                     </motion.button>
+
+                    <motion.button
+                        onClick={toggleFullscreen}
+                        whileHover={{ scale: 1.05, rotate: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{
+                            padding: '14px 28px',
+                            background: fullscreen 
+                                ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            border: 'none',
+                            borderRadius: '50px',
+                            color: '#fff',
+                            fontSize: '1rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            boxShadow: fullscreen
+                                ? '0 10px 30px rgba(245, 87, 108, 0.4)'
+                                : '0 10px 30px rgba(102, 126, 234, 0.4)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            fontFamily: 'Orbitron, sans-serif',
+                            letterSpacing: '0.5px',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        {fullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+                        {fullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                    </motion.button>
                 </div>
             </motion.div>
 
             {/* Canvas Container */}
             <motion.div
+                ref={containerRef}
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5 }}
                 style={{
-                    position: 'relative',
-                    borderRadius: '25px',
+                    position: fullscreen ? {
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        zIndex: 9999
+                    } : 'relative',
+                    borderRadius: fullscreen ? 0 : '25px',
                     overflow: 'hidden',
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(79, 172, 254, 0.1)',
-                    border: '3px solid rgba(79, 172, 254, 0.3)',
+                    boxShadow: fullscreen 
+                        ? 'none'
+                        : '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(79, 172, 254, 0.1)',
+                    border: fullscreen 
+                        ? 'none'
+                        : '3px solid rgba(79, 172, 254, 0.3)',
                     background: 'rgba(15, 15, 35, 0.5)',
-                    backdropFilter: 'blur(20px)'
+                    backdropFilter: 'blur(20px)',
+                    transition: 'all 0.3s ease'
                 }}
             >
                 <Canvas
                     ref={sceneRef}
                     camera={{ position: [0, 1.6, 5], fov: 75 }}
                     style={{ 
-                        width: '100%', 
-                        height: '600px',
+                        width: fullscreen ? '100vw' : '100%', 
+                        height: fullscreen ? '100vh' : '600px',
                         background: 'transparent'
                     }}
                 >

@@ -9,6 +9,7 @@ import ThreeScene from "../components/ThreeScene.jsx";
 import WallMesh from "../components/WallMesh.jsx";
 import RoomEditor from "../components/RoomEditor.jsx";
 import RoomLabel from "../components/RoomLabel.jsx";
+import FurnitureObject from "../components/FurnitureObject.jsx";
 
 import { extractRooms } from "../utils/extractRooms.js";
 import { getBounding } from "../utils/getBounding.js";
@@ -24,6 +25,7 @@ export default function Home() {
     const [rooms, setRooms] = useState(null);
 
     const [scale, setScale] = useState(null);
+    const [furniture, setFurniture] = useState([]);
 
     // Determine current phase
     const getCurrentPhase = () => {
@@ -52,6 +54,7 @@ export default function Home() {
         setSegments(null);
         setRooms(null);
         setScale(null);
+        setFurniture([]);
     };
 
     // PHASE 2 — Extract Rooms AFTER user confirms walls
@@ -287,6 +290,7 @@ export default function Home() {
                         initial={{ x: -100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 100 }}
+                        style={{ marginBottom: '30px' }}
                     >
                         <RoomEditor rooms={rooms} onAssign={updateRoomType} />
                     </motion.div>
@@ -317,6 +321,10 @@ export default function Home() {
                             {segments.map((s, i) => {
                                 const A = nodes[s.n1];
                                 const B = nodes[s.n2];
+                                
+                                // Get wall color if available (from backend or manual)
+                                const wallColor = s.color || "#8f8f8f";
+                                
                                 return (
                                     <WallMesh
                                         key={i}
@@ -328,6 +336,7 @@ export default function Home() {
                                         thickness={0.15}
                                         scale={scale}
                                         offset={offset}
+                                        color={wallColor}
                                     />
                                 );
                             })}
@@ -343,6 +352,86 @@ export default function Home() {
                                     ]}
                                 />
                             ))}
+
+                            {/* Render furniture objects based on room types */}
+                            {rooms.map((room, idx) => {
+                                if (!room.type) return null;
+                                
+                                // Add furniture based on room type
+                                const furnitureItems = [];
+                                const basePos = [
+                                    (room.center.x * scale) - offset.x,
+                                    0,
+                                    (room.center.y * scale * -1) - offset.z
+                                ];
+                                
+                                switch(room.type.toLowerCase()) {
+                                    case 'bedroom':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`bed-${idx}`}
+                                                type="bed"
+                                                position={[basePos[0], basePos[1], basePos[2]]}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    case 'bathroom':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`bathtub-${idx}`}
+                                                type="bathtub"
+                                                position={[basePos[0] + 1, basePos[1], basePos[2]]}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    case 'toilet':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`toilet-${idx}`}
+                                                type="toilet"
+                                                position={basePos}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    case 'kitchen':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`fridge-${idx}`}
+                                                type="refrigerator"
+                                                position={[basePos[0] + 1.5, basePos[1], basePos[2]]}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    case 'living room':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`sofa-${idx}`}
+                                                type="sofa"
+                                                position={basePos}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    case 'dining':
+                                        furnitureItems.push(
+                                            <FurnitureObject
+                                                key={`table-${idx}`}
+                                                type="table"
+                                                position={basePos}
+                                                scale={1}
+                                            />
+                                        );
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                
+                                return furnitureItems;
+                            })}
                         </ThreeScene>
                     </motion.div>
                 )}

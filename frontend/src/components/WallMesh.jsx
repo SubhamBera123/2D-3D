@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-export default function WallMesh({ x1, y1, x2, y2, height, thickness, scale, offset }) {
+export default function WallMesh({ x1, y1, x2, y2, height, thickness, scale, offset, color }) {
 
     const { length, angle, midX, midZ } = useMemo(() => {
         const dx = (x2 - x1) * scale;
@@ -14,6 +14,9 @@ export default function WallMesh({ x1, y1, x2, y2, height, thickness, scale, off
         };
     }, [x1, y1, x2, y2, scale, offset]);
 
+    // Use provided color or default gray
+    const wallColor = color || "#8f8f8f";
+
     return (
         <mesh
             position={[midX, height / 2, midZ]}
@@ -23,10 +26,10 @@ export default function WallMesh({ x1, y1, x2, y2, height, thickness, scale, off
         >
             <boxGeometry args={[length, height, thickness]} />
             <meshStandardMaterial 
-                color="#8f8f8f" 
+                color={wallColor} 
                 roughness={0.3} 
                 metalness={0.8}
-                emissive="#4a5568"
+                emissive={wallColor}
                 emissiveIntensity={0.2}
             />
         </mesh>

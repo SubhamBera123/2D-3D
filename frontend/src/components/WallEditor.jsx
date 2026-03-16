@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Edit3, Trash2, CheckCircle, Plus, Info } from "lucide-react";
+import { Edit3, Trash2, CheckCircle, Plus, Info, MousePointer2 } from "lucide-react";
 
 export default function WallEditor({ image, walls, onGeometryUpdate }) {
 
@@ -11,6 +11,8 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
 
     const [dragIndex, setDragIndex] = useState(null);
     const [addingWallStart, setAddingWallStart] = useState(null);
+    const [manualMode, setManualMode] = useState(false);
+    const [autoDetectedWalls, setAutoDetectedWalls] = useState([]);
 
     // Convert raw walls → nodes + segments
     useEffect(() => {
@@ -26,11 +28,18 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
             const idx1 = localNodes.push(n1) - 1;
             const idx2 = localNodes.push(n2) - 1;
 
-            localSegments.push({ id: idx, n1: idx1, n2: idx2 });
+            // Preserve color from backend if it exists
+            localSegments.push({ 
+                id: idx, 
+                n1: idx1, 
+                n2: idx2,
+                color: w.color || "#8f8f8f"
+            });
         });
 
         setNodes(localNodes);
         setSegments(localSegments);
+        setAutoDetectedWalls(localSegments); // Store auto-detected walls
     }, [walls, image]);
 
     // Draw blueprint + nodes + segments
@@ -121,6 +130,8 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
 
     // START ADDING WALL (Double-click)
     const onDoubleClick = (e) => {
+        if (!manualMode) return; // Only work in manual mode
+        
         const rect = canvasRef.current.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -138,6 +149,7 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
                 id: Date.now(),
                 n1: idx1,
                 n2: idx2,
+                isManual: true // Mark as manually added
             });
             setSegments(scopy);
 
@@ -173,6 +185,28 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
 
     const onMouseUp = () => setDragIndex(null);
 
+    // Toggle manual mode
+    const toggleManualMode = () => {
+        if (!manualMode) {
+            // Switching to manual mode - clear auto-detected walls
+            setAutoDetectedWalls([...segments]);
+            setSegments([]);
+            setNodes([]);
+        } else {
+            // Switching back to auto mode - restore auto-detected walls
+            setSegments(autoDetectedWalls);
+        }
+        setManualMode(!manualMode);
+        setAddingWallStart(null);
+    };
+
+    // Clear all manual walls and start fresh
+    const clearAllWalls = () => {
+        setSegments([]);
+        setNodes([]);
+        setAddingWallStart(null);
+    };
+
     useEffect(() => {
     if (nodes.length && segments.length) {
             onGeometryUpdate(nodes, segments);
@@ -193,7 +227,7 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
                 transition={{ duration: 0.4 }}
                 style={{
                     padding: '20px 30px',
-                    background: 'rgba(0, 242, 254, 0.1)',
+                    background: manualMode ? 'rgba(245, 87, 108, 0.1)' : 'rgba(0, 242, 254, 0.1)',
                     backdropFilter: 'blur(10px)',
                     borderRadius: '20px',
                     border: '2px solid rgba(0, 242, 254, 0.3)',
@@ -205,11 +239,68 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
                 }}
             >
                 <Info size={24} color="#00f2fe" />
-                <div style={{ color: '#fff' }}>
+                <div style={{ color: '#fff', flex: 1 }}>
                     <strong style={{ color: '#00f2fe', fontSize: '1.1rem' }}>Edit Walls:</strong>
                     <span style={{ marginLeft: '10px', color: 'rgba(255,255,255,0.8)' }}>
-                        Double-click to add walls • Right-click to delete • Drag nodes to adjust
+                        {manualMode 
+                            ? 'Double-click to add walls • Click two points to create a wall' 
+                            : 'Right-click to delete • Drag nodes to adjust'
+                        }
                     </span>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <motion.button
+                        onClick={toggleManualMode}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{
+                            padding: '12px 24px',
+                            background: manualMode 
+                                ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                                : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                            border: 'none',
+                            borderRadius: '50px',
+                            color: '#fff',
+                            fontSize: '0.95rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontFamily: 'Orbitron, sans-serif'
+                        }}
+                    >
+                        <MousePointer2 size={18} />
+                        {manualMode ? 'Auto Mode' : 'Manual Mode'}
+                    </motion.button>
+
+                    {manualMode && (
+                        <motion.button
+                            onClick={clearAllWalls}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            style={{
+                                padding: '12px 24px',
+                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                border: 'none',
+                                borderRadius: '50px',
+                                color: '#fff',
+                                fontSize: '0.95rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                boxShadow: '0 8px 20px rgba(239, 68, 68, 0.4)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontFamily: 'Orbitron, sans-serif'
+                            }}
+                        >
+                            <Trash2 size={18} />
+                            Clear All
+                        </motion.button>
+                    )}
                 </div>
             </motion.div>
 
@@ -226,6 +317,31 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
                     border: '3px solid rgba(0, 242, 254, 0.3)'
                 }}
             >
+                {manualMode && addingWallStart && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                            position: 'absolute',
+                            top: addingWallStart.y - 20,
+                            left: addingWallStart.x - 80,
+                            padding: '8px 16px',
+                            background: 'rgba(245, 87, 108, 0.9)',
+                            borderRadius: '20px',
+                            color: '#fff',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 4px 15px rgba(245, 87, 108, 0.5)'
+                        }}
+                    >
+                        Click second point →
+                    </motion.div>
+                )}
+                
                 <canvas
                     ref={canvasRef}
                     onContextMenu={onRightClick}
@@ -237,7 +353,7 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
                         display: 'block',
                         maxWidth: '100%',
                         height: 'auto',
-                        cursor: 'crosshair'
+                        cursor: manualMode ? 'crosshair' : 'move'
                     }}
                 />
             </motion.div>
