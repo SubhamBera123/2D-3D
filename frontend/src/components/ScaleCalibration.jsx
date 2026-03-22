@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Ruler, Target, Check } from "lucide-react";
 
-export default function ScaleCalibration({ image, onScaleComputed }) {
+export default function ScaleCalibration({ image, onScaleComputed, onBackToWalls }) {
     const canvasRef = useRef(null);
     const [p1, setP1] = useState(null);
     const [p2, setP2] = useState(null);
@@ -78,16 +78,41 @@ export default function ScaleCalibration({ image, onScaleComputed }) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '15px',
-                    boxShadow: '0 8px 32px rgba(0, 242, 254, 0.15)'
+                    justifyContent: 'space-between'
                 }}
             >
-                <Target size={24} color="#00f2fe" />
-                <div style={{ color: '#fff' }}>
-                    <strong style={{ color: '#00f2fe', fontSize: '1.1rem' }}>Set Scale:</strong>
-                    <span style={{ marginLeft: '10px', color: 'rgba(255,255,255,0.8)' }}>
-                        Click two points on a known distance and enter the real measurement
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+                    <Target size={24} color="#00f2fe" />
+                    <div style={{ color: '#fff' }}>
+                        <strong style={{ color: '#00f2fe', fontSize: '1.1rem' }}>Set Scale:</strong>
+                        <span style={{ marginLeft: '10px', color: 'rgba(255,255,255,0.8)' }}>
+                            Click two points on a known distance and enter the real measurement
+                        </span>
+                    </div>
                 </div>
+                
+                <motion.button
+                    onClick={onBackToWalls}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                        padding: '12px 24px',
+                        background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                        border: 'none',
+                        borderRadius: '50px',
+                        color: '#fff',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontFamily: 'Orbitron, sans-serif'
+                    }}
+                >
+                    ← Back to Edit Walls
+                </motion.button>
             </motion.div>
 
             {/* Canvas Container */}

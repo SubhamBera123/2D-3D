@@ -77,6 +77,24 @@ export default function Home() {
         setRooms(updated);
     };
 
+    const updateRoomLabelPosition = (index, position) => {
+        const updated = [...rooms];
+        updated[index].labelPosition = position;
+        setRooms(updated);
+        console.log(`Room ${index} label moved to:`, position);
+    };
+
+    const addNewRoom = (position) => {
+        const newRoom = {
+            polygon: [], // Empty polygon for manual room
+            center: position,
+            labelPosition: position,
+            type: null
+        };
+        setRooms([...rooms, newRoom]);
+        console.log('Added new room at:', position);
+    };
+
     // center offset for 3D
     let offset = { x: 0, z: 0 };
     if (scale && nodes && segments) {
@@ -267,7 +285,7 @@ export default function Home() {
                 <UploadPanel onWallsDetected={handleWallsDetected} />
 
                 {/* PHASE 1 — WALL EDITOR */}
-                {imageURL && walls.length > 0 && nodes === null && segments === null && (
+                {imageURL && walls.length > 0 && !scale && (
                     <motion.div
                         initial={{ x: -100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -285,19 +303,33 @@ export default function Home() {
                 )}
 
                 {/* PHASE 2 — ROOM LABELING */}
-                {nodes && segments && rooms && scale === null && (
+                {nodes && segments && rooms && !scale && (
                     <motion.div
                         initial={{ x: -100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 100 }}
                         style={{ marginBottom: '30px' }}
                     >
-                        <RoomEditor rooms={rooms} onAssign={updateRoomType} />
+                        {!scale && (
+                            <RoomEditor 
+                                rooms={rooms} 
+                                blueprintImage={imageURL}
+                                onAssign={updateRoomType}
+                                onUpdateRoomPosition={updateRoomLabelPosition}
+                                onAddRoom={addNewRoom}
+                                onBackToWalls={() => {
+                                    setNodes(null);
+                                    setSegments(null);
+                                    setRooms(null);
+                                }}
+                            />
+                        )}
+
                     </motion.div>
                 )}
 
                 {/* PHASE 3 — SCALE */}
-                {nodes && segments && rooms && scale === null && (
+                {nodes && segments && rooms && !scale && (
                     <motion.div
                         initial={{ x: 100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -306,6 +338,11 @@ export default function Home() {
                         <ScaleCalibration
                             image={imageURL}
                             onScaleComputed={s => setScale(s)}
+                            onBackToWalls={() => {
+                                setNodes(null);
+                                setSegments(null);
+                                setRooms(null);
+                            }}
                         />
                     </motion.div>
                 )}

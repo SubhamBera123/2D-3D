@@ -17,6 +17,12 @@ export default function UploadPanel({ onWallsDetected }) {
             const data = await uploadBlueprint(file);
             console.log("BACKEND RESPONSE:", data);
 
+            // Validate response
+            if (!data.walls && !data.segments && !data.lines && !data.edges) {
+                console.error("Invalid response from backend:", data);
+                throw new Error("Backend returned invalid response");
+            }
+
             // Universal wall extraction — supports walls, segments OR lines
             const walls =
                 data.walls ||
@@ -25,10 +31,30 @@ export default function UploadPanel({ onWallsDetected }) {
                 data.edges ||
                 [];
 
+            if (walls.length === 0) {
+                alert("No walls detected in the image. Please try with a clearer floor plan or use Manual Mode to draw walls.");
+            }
+
             onWallsDetected(file, walls);
         } catch (error) {
             console.error("Upload error:", error);
-            alert("Failed to process blueprint. Please try again.");
+            
+            // Show specific error message
+            let errorMessage = "Failed to process blueprint. ";
+            
+            if (error.message.includes("Network Error") || error.message.includes("Failed to fetch")) {
+                errorMessage += "Cannot connect to backend server. Make sure it's running on http://127.0.0.1:8000";
+            } else if (error.response?.status === 500) {
+                errorMessage += "Server error. Please check the backend logs.";
+            } else if (error.response?.status === 400) {
+                errorMessage += "Invalid file format. Please upload a valid image.";
+            } else if (error.response?.status === 413) {
+                errorMessage += "File too large. Please use a smaller image.";
+            } else {
+                errorMessage += error.message || "Please try again.";
+            }
+            
+            alert(errorMessage);
         } finally {
             setIsUploading(false);
         }

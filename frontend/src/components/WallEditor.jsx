@@ -114,9 +114,15 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
     // DELETE WALL (Right-click)
     const onRightClick = (e) => {
         e.preventDefault();
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calculate scale factors
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
 
         let newSegments = segments.filter(s => {
             const n1 = nodes[s.n1];
@@ -132,9 +138,18 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
     const onDoubleClick = (e) => {
         if (!manualMode) return; // Only work in manual mode
         
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calculate scale factors
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        // Get mouse position relative to canvas
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
+
+        console.log('Manual Mode - Double Click at:', { x: mx, y: my, canvasSize: { width: canvas.width, height: canvas.height }, displaySize: { width: rect.width, height: rect.height } });
 
         if (!addingWallStart) {
             setAddingWallStart({ x: mx, y: my });
@@ -159,9 +174,15 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
 
     // DRAGGING NODES
     const onMouseDown = (e) => {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calculate scale factors
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
 
         nodes.forEach((n, idx) => {
             const dist = Math.hypot(n.x - mx, n.y - my);
@@ -174,9 +195,15 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
     const onMouseMove = (e) => {
         if (dragIndex === null) return;
 
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        
+        // Calculate scale factors
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
 
         let nn = [...nodes];
         nn[dragIndex] = { x: mx, y: my };
@@ -188,13 +215,22 @@ export default function WallEditor({ image, walls, onGeometryUpdate }) {
     // Toggle manual mode
     const toggleManualMode = () => {
         if (!manualMode) {
-            // Switching to manual mode - clear auto-detected walls
+            // Switching to manual mode - clear current walls but save auto-detected
             setAutoDetectedWalls([...segments]);
             setSegments([]);
             setNodes([]);
         } else {
             // Switching back to auto mode - restore auto-detected walls
-            setSegments(autoDetectedWalls);
+            if (autoDetectedWalls.length > 0) {
+                setSegments(autoDetectedWalls);
+                // Rebuild nodes from auto-detected segments
+                const newNodes = [];
+                autoDetectedWalls.forEach(seg => {
+                    if (nodes[seg.n1]) newNodes[seg.n1] = nodes[seg.n1];
+                    if (nodes[seg.n2]) newNodes[seg.n2] = nodes[seg.n2];
+                });
+                setNodes(newNodes);
+            }
         }
         setManualMode(!manualMode);
         setAddingWallStart(null);
