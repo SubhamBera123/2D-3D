@@ -10,6 +10,7 @@ import WallMesh from "../components/WallMesh.jsx";
 import RoomEditor from "../components/RoomEditor.jsx";
 import RoomLabel from "../components/RoomLabel.jsx";
 import FurnitureObject from "../components/FurnitureObject.jsx";
+import DetectedObject3D from "../components/DetectedObject3D.jsx";
 
 import { extractRooms } from "../utils/extractRooms.js";
 import { getBounding } from "../utils/getBounding.js";
@@ -19,6 +20,7 @@ export default function Home() {
 
     const [walls, setWalls] = useState([]);
     const [imageURL, setImageURL] = useState(null);
+    const [objects3D, setObjects3D] = useState([]); // NEW: Store 3D objects
 
     const [nodes, setNodes] = useState(null);
     const [segments, setSegments] = useState(null);
@@ -45,9 +47,11 @@ export default function Home() {
         { icon: <Building2 size={20} />, title: "3D View", description: "Explore your 3D model" }
     ];
 
-    const handleWallsDetected = (file, detectedWalls) => {
+    const handleWallsDetected = (file, detectedWalls, detectedObjects = []) => {
         setImageURL(URL.createObjectURL(file));
         setWalls(detectedWalls);
+        setObjects3D(detectedObjects); // NEW: Store detected objects
+        console.log('🎯 Detected 2D objects:', detectedObjects);
 
         // reset flow
         setNodes(null);
@@ -355,6 +359,16 @@ export default function Home() {
                         transition={{ type: "spring", stiffness: 100 }}
                     >
                         <ThreeScene scale={scale} offset={offset} rooms={rooms}>
+                            {/* Render detected 2D objects as 3D */}
+                            {objects3D.map((obj, idx) => (
+                                <DetectedObject3D
+                                    key={`detected-obj-${idx}`}
+                                    object={obj}
+                                    scale={scale * 0.5} // Adjust scale for proper sizing
+                                />
+                            ))}
+
+                            {/* Render walls */}
                             {segments.map((s, i) => {
                                 const A = nodes[s.n1];
                                 const B = nodes[s.n2];

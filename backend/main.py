@@ -4,6 +4,7 @@ import shutil
 import os
 from cv.preprocess import preprocess
 from cv.detect_lines import detect_lines
+from cv.detect_objects import detect_objects
 
 app = FastAPI()
 
@@ -40,8 +41,10 @@ async def process_blueprint(file: UploadFile = File(...)):
     # Process with OpenCV
     img, gray, edges = preprocess(file_location)
     walls = detect_lines(edges, img)  # Pass original image for color extraction
+    objects = detect_objects(img, gray)  # Detect furniture and fixtures
 
     return {
         "filename": file.filename,
-        "walls": walls
+        "walls": walls,
+        "objects": objects  # NEW: Return detected objects
     }

@@ -31,11 +31,14 @@ export default function UploadPanel({ onWallsDetected }) {
                 data.edges ||
                 [];
 
+            // Extract objects (NEW!)
+            const objects = data.objects || [];
+
             if (walls.length === 0) {
                 alert("No walls detected in the image. Please try with a clearer floor plan or use Manual Mode to draw walls.");
             }
 
-            onWallsDetected(file, walls);
+            onWallsDetected(file, walls, objects); // Pass objects too
         } catch (error) {
             console.error("Upload error:", error);
             
